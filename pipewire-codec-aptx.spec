@@ -6,10 +6,10 @@
 
 %global majorversion 0
 %global minorversion 3
-%if %{?fedora} > 33
-%global microversion 37
-%else
-%global microversion 26
+%if %{?fedora} >= 35
+%global microversion 45
+%else 
+%global microversion 40
 %endif
 
 %global apiversion   0.3
@@ -20,8 +20,8 @@
 # For rpmdev-bumpspec and releng automation
 %global baserelease 7
 
-#global snapdate   20210107
-#global gitcommit  b17db2cebc1a5ab2c01851d29c05f79cd2f262bb
+#global snapdate   20220203
+#global gitcommit  bdd407fe66cc9e46d4bc4dcc989d50679000482b
 #global shortcommit %(c=%{gitcommit}; echo ${c:0:7})
 
 # https://bugzilla.redhat.com/983606
@@ -78,6 +78,7 @@ Source0:        https://gitlab.freedesktop.org/pipewire/pipewire/-/archive/%{ver
 
 BuildRequires:  gettext
 BuildRequires:  meson >= 0.49.0
+BuildRequires:  cmake
 BuildRequires:  gcc
 BuildRequires:  g++
 BuildRequires:  pkgconfig
@@ -115,7 +116,12 @@ BuildRequires:  libusb-devel
 BuildRequires:  libfreeaptx-devel
 BuildRequires:  jack-audio-connection-kit-devel
 BuildRequires:  fdk-aac-free-devel
-BuildRequires:  ffmpeg-devel
+BuildRequires:  ffmpeg-devel >= 5.0
+BuildRequires:  libcanberra-devel
+BuildRequires:  openssl-devel
+BuildRequires:  lilv-devel
+BuildRequires:  libdrm-devel
+BuildRequires:  readline-devel
 
 Requires:       pipewire >= %{version}
 
@@ -135,11 +141,14 @@ Requires:       pipewire >= %{version}
 %autosetup -p1 -n %{realname}-%{version}
 
 %build
-%meson_config  \
+
+	
+%meson_config \
     -D docs=enabled -D man=enabled -D gstreamer=enabled -D systemd=enabled	\
-    -D gstreamer-device-provider=disabled -D sdl2=disabled -D bluez5=enabled	\
-    -D audiotestsrc=disabled -D videotestsrc=disabled -D ffmpeg=enabled		\
-    -D volume=disabled -D bluez5-codec-aptx=enabled -D roc=disabled 		\
+    -D gstreamer-device-provider=disabled -D sdl2=disabled 			\
+    -D audiotestsrc=disabled -D videotestsrc=disabled				\
+    -D volume=disabled -D bluez5-codec-aptx=disabled -D roc=disabled 		\
+    -D ffmpeg=enabled -D bluez5-codec-aptx=enabled 				\
 %ifarch s390x
     -D bluez5-codec-ldac=disabled						\
 %endif
@@ -147,11 +156,11 @@ Requires:       pipewire >= %{version}
     %{!?with_jack:-D pipewire-jack=disabled} 					\
     %{!?with_jackserver_plugin:-D jack=disabled} 				\
     %{!?with_libcamera_plugin:-D libcamera=disabled} 				\
-    %{?with_jack:-D jack-devel=true} 						\
+    %{?with_jack:-D jack-devel=true} 					\
     %{!?with_alsa:-D pipewire-alsa=disabled}					\
     %{?with_vulkan:-D vulkan=enabled}
-    
 %meson_build -C _build
+
 
 
 %install
@@ -170,6 +179,9 @@ install -m644  _build/spa/plugins/ffmpeg/libspa-ffmpeg.so %{buildroot}/%{_libdir
 %{_libdir}/spa-*/ffmpeg/libspa-ffmpeg.so
 
 %changelog
+
+* Sun Feb 13 2022 Unitedrpms Project <unitedrpms AT protonmail DOT com> - 0.3.47-7
+- Updated to 0.3.47-7
 
 * Fri Sep 24 2021 Unitedrpms Project <unitedrpms AT protonmail DOT com> - 0.3.37-7
 - Used the base rpm for our subpackages
